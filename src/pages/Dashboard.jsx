@@ -8,8 +8,8 @@ import { dashboardData } from "../data/dashboardData";
 
 import {
   Package,
-  ShoppingCart,
-  Bot,
+  Menu,
+  List,
   Activity,
 } from "lucide-react";
 
@@ -17,7 +17,7 @@ export default function Dashboard() {
   const { metrics, storageUsed, utilization, warehouse, suggestions } = dashboardData;
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="min-h-screen bg-gray-100 overflow-x-hidden">
       <Header />
 
       <main className="p-4 sm:p-6 space-y-6">
@@ -32,13 +32,13 @@ export default function Dashboard() {
             title="Orders Fulfilled Today"
             value={metrics.ordersFulfilled.value}
             change={metrics.ordersFulfilled.change}
-            icon={<ShoppingCart size={20} className="text-gray-400" />}
+            icon={<Menu size={20} className="text-gray-400" />}
           />
           <MetricCard
             title="AI Tasks Generated"
             value={metrics.aiTasks.value}
             change={metrics.aiTasks.change}
-            icon={<Bot size={20} className="text-gray-400" />}
+            icon={<List size={20} className="text-gray-400" />}
           />
           <MetricCard
             title="Efficiency Score"

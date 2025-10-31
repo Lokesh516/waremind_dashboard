@@ -1,8 +1,16 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 
-export default function ThermoGaugeD3({ height = 120, value = 80, label = "T", isPeak = false }) {
+export default function ThermoGaugeD3({
+  height = 120,
+  value = 80,
+  label = "T",
+  isPeak = false,
+  index = 0,
+}) {
   const svgRef = useRef();
+  const containerRef = useRef();
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
@@ -19,10 +27,9 @@ export default function ThermoGaugeD3({ height = 120, value = 80, label = "T", i
     const capsuleY = stemY + height - (capsuleSize + 2);
     const gradientBottomY = stemY + (height - fillHeight);
     const topCircleY = stemY + 6;
-    const gradientTopY = gradientBottomY;
 
     const touchesCapsule = gradientBottomY <= capsuleY;
-    const touchesTopCircle = gradientTopY <= topCircleY;
+    const touchesTopCircle = gradientBottomY <= topCircleY;
 
     const defs = svg.append("defs");
     const gradient = defs.append("linearGradient")
@@ -31,6 +38,23 @@ export default function ThermoGaugeD3({ height = 120, value = 80, label = "T", i
       .attr("x2", "0%").attr("y2", "0%");
     gradient.append("stop").attr("offset", "0%").attr("stop-color", "#f97316").attr("stop-opacity", 1);
     gradient.append("stop").attr("offset", "100%").attr("stop-color", "#fde68a").attr("stop-opacity", 0.6);
+
+    const yScale = d3.scaleLinear()
+      .domain([0, 100])
+      .range([stemY + height, stemY]);
+
+    if (index === 0) {
+      const yTicks = [0, 25, 50, 75, 100];
+      yTicks.forEach(tick => {
+        svg.append("text")
+          .attr("x", 0)
+          .attr("y", yScale(tick))
+          .attr("text-anchor", "start")
+          .attr("font-size", 10)
+          .attr("fill", "#9ca3af")
+          .text(tick);
+      });
+    }
 
     svg.append("rect")
       .attr("x", stemX)
@@ -43,6 +67,8 @@ export default function ThermoGaugeD3({ height = 120, value = 80, label = "T", i
       .attr("stroke", "#d1d5db")
       .attr("stroke-width", 1);
 
+    const tooltip = d3.select(containerRef.current).select(".tooltip");
+
     svg.append("rect")
       .attr("x", stemX)
       .attr("y", stemY + height)
@@ -51,6 +77,20 @@ export default function ThermoGaugeD3({ height = 120, value = 80, label = "T", i
       .attr("rx", barWidth / 2)
       .attr("ry", barWidth / 2)
       .attr("fill", "url(#thermoGradient)")
+      .on("mouseover", function (event) {
+        tooltip
+          .style("opacity", 1)
+          .html(`<strong>${label}</strong>: ${clampedValue}%`);
+      })
+      .on("mousemove", function (event) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        tooltip
+          .style("left", `${event.clientX - containerRect.left + 10}px`)
+          .style("top", `${event.clientY - containerRect.top - 30}px`);
+      })
+      .on("mouseout", function () {
+        tooltip.style("opacity", 0);
+      })
       .transition()
       .duration(800)
       .ease(d3.easeCubicOut)
@@ -61,9 +101,7 @@ export default function ThermoGaugeD3({ height = 120, value = 80, label = "T", i
       .attr("cx", stemX + barWidth / 2)
       .attr("cy", topCircleY)
       .attr("r", 5)
-      .attr("fill", touchesTopCircle ? "white" : "#f3f4f6")
-      .attr("stroke", touchesTopCircle ? "none" : "#d1d5db")
-      .attr("stroke-width", touchesTopCircle ? 0 : 1);
+      .attr("fill", touchesTopCircle ? "white" : "#d5d7daff")
 
     const lineStartY = stemY + 18;
     const lineEndY = capsuleY - 7;
@@ -115,7 +153,12 @@ export default function ThermoGaugeD3({ height = 120, value = 80, label = "T", i
       .attr("fill", "#374151")
       .attr("font-weight", "bold")
       .text(label);
-  }, [height, value, label, isPeak]);
+  }, [height, value, label, isPeak, index]);
 
-  return <svg ref={svgRef} width={60} height={height + 40} />;
+  return (
+    <div ref={containerRef} className="relative flex flex-col items-center w-full">
+      <svg ref={svgRef} width={60} height={height + 40} className="block" />
+      <div className="tooltip absolute z-10 px-2 py-1 text-xs text-gray-700 bg-white border border-gray-300 rounded shadow pointer-events-none opacity-0 transition-opacity duration-200" />
+    </div>
+  );
 }
